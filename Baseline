@@ -1,0 +1,205 @@
+
+# Import the libraries we'll use below.
+import numpy as np
+from matplotlib import pyplot as plt
+import string
+import pandas as pd
+import seaborn as sns  # for nicer plots
+sns.set(style="darkgrid")  # default style
+import re
+import tensorflow as tf
+
+# Loading Training and Test Data
+from google.colab import drive
+drive.mount('/content/drive')
+
+cols = ['id', 'text', 'location', 'keyword', 'target']
+
+train_data = pd.read_csv("train.csv")
+test_data = pd.read_csv("test.csv")
+
+train_data
+
+# Data Preprocessing
+def remove_punctuation(text):
+    return text.translate(str.maketrans('', '', string.punctuation))
+
+train_data['text'] = train_data['text'].apply(lambda x: '' if pd.isna(x) else x)
+train_data['text'] = train_data['text'].apply(lambda x: remove_punctuation(x))
+
+display(train_data)
+
+# Data Preprocessing
+def remove_punctuation(text):
+    return text.translate(str.maketrans('', '', string.punctuation))
+
+train_data['text'] = train_data['text'].apply(lambda x: '' if pd.isna(x) else x)
+train_data['text'] = train_data['text'].apply(lambda x: remove_punctuation(x))
+
+display(train_data)
+
+# Split the data into training and validation sets
+train_size = int(train_data.shape[0] * 0.9)
+
+tweet_train = train_data[:train_size]
+tweet_validation = train_data[train_size:]
+
+tweet_train.shape
+
+# Define the sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# Define the logistic regression model
+def logistic_regression(X, y, lr=0.01, epochs=1000):
+    n_samples, n_features = X.shape
+    w = np.zeros((n_features, 1))
+    b = 0
+    for epoch in range(epochs):
+        z = np.dot(X, w) + b
+        a = sigmoid(z)
+        cost = (-1 / n_samples) * np.sum(y * np.log(a) + (1 - y) * np.log(1 - a))
+        dw = (1 / n_samples) * np.dot(X.T, (a - y))
+        db = (1 / n_samples) * np.sum(a - y)
+        w -= lr * dw
+        b -= lr * db
+    return w, b
+
+# Extract the features and target from the training set
+X_train = tweet_train['text']
+y_train = tweet_train['target']
+
+# Convert the text data into a bag-of-words representation
+unique_words = set(' '.join(X_train).split())
+word_to_idx = {word: i for i, word in enumerate(unique_words)}
+X_train_bow = np.zeros((len(X_train), len(unique_words)))
+for i, tweet in enumerate(X_train):
+    for word in tweet.split():
+        X_train_bow[i, word_to_idx[word]] += 1
+
+# Train the logistic regression model
+w, b = logistic_regression(X_train_bow, y_train.values.reshape((-1, 1)))
+
+# Extract the features and target from the validation set
+X_val = tweet_validation['text']
+y_val = tweet_validation['target']
+
+# Convert the text data into a bag-of-words representation
+X_val_bow = np.zeros((len(X_val), len(unique_words)))
+for i, tweet in enumerate(X_val):
+    for word in tweet.split():
+        if word in word_to_idx:
+            X_val_bow[i, word_to_idx[word]] += 1
+
+# Make predictions on the validation set
+z = np.dot(X_val_bow, w) + b
+y_pred = sigmoid(z)
+y_pred_binary = (y_pred >= 0.5).astype(int)
+
+# Calculate the accuracy on the validation set
+accuracy = np.mean(y_pred_binary == y_val.values.reshape((-1, 1)))
+print("Baseline accuracy:", accuracy)
+
+# Define the sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# Define the logistic regression model
+def logistic_regression(X, y, lr=0.01, epochs=1000):
+    n_samples, n_features = X.shape
+    w = np.zeros((n_features, 1))
+    b = 0
+    for epoch in range(epochs):
+        z = np.dot(X, w) + b
+        a = sigmoid(z)
+        cost = (-1 / n_samples) * np.sum(y * np.log(a) + (1 - y) * np.log(1 - a))
+        dw = (1 / n_samples) * np.dot(X.T, (a - y))
+        db = (1 / n_samples) * np.sum(a - y)
+        w -= lr * dw
+        b -= lr * db
+    return w, b
+
+# Extract the features and target from the training set
+X_train = tweet_train['text']
+y_train = tweet_train['target']
+
+# Convert the text data into a bag-of-words representation
+unique_words = set(' '.join(X_train).split())
+word_to_idx = {word: i for i, word in enumerate(unique_words)}
+X_train_bow = np.zeros((len(X_train), len(unique_words)))
+for i, tweet in enumerate(X_train):
+    for word in tweet.split():
+        X_train_bow[i, word_to_idx[word]] += 1
+
+# Train the logistic regression model
+w, b = logistic_regression(X_train_bow, y_train.values.reshape((-1, 1)))
+
+# Extract the features and target from the validation set
+X_val = tweet_validation['text']
+y_val = tweet_validation['target']
+
+# Convert the text data into a bag-of-words representation
+X_val_bow = np.zeros((len(X_val), len(unique_words)))
+for i, tweet in enumerate(X_val):
+    for word in tweet.split():
+        if word in word_to_idx:
+            X_val_bow[i, word_to_idx[word]] += 1
+
+# Make predictions on the validation set
+z = np.dot(X_val_bow, w) + b
+y_pred = sigmoid(z)
+y_pred_binary = (y_pred >= 0.5).astype(int)
+
+# Calculate the accuracy on the validation set
+accuracy = np.mean(y_pred_binary == y_val.values.reshape((-1, 1)))
+print("Baseline accuracy:", accuracy)
+
+
+# Plotting target value counts
+fig, ax = plt.subplots(figsize=(10, 8))
+sns.countplot(data = train_data, x='target', palette = 'cool')
+plt.suptitle("Target Value Counts", fontsize=20)
+plt.show()
+
+train_table=train_data['target'].value_counts().to_frame()
+train_table
+
+# We're using a bar graph to compare the frequency disaster vs. non-disaster tweets. 
+
+# Extract the word counts from the 'text' column
+word_counts = train_data['text'].str.split().apply(len)
+
+# Plot a histogram of the word counts
+plt.hist(word_counts, bins=50)
+plt.xlabel('Word count')
+plt.ylabel('Frequency')
+plt.title('Histogram of word counts in tweets')
+plt.show()
+
+
+# This histogram shows that most tweets have between 10 and 20 words per tweet.
+# We can assume that tweets with less than 3 words and more than 25 words are less useful when training for disaster tweet predictions
+# Dropping tweets that fall in these categories will not make much of a difference on a model's prediction ability
+disaster_tweets = train_data[train_data['target']==1]
+nondisaster_tweets = train_data[train_data['target']==0]
+
+common_keywords=disaster_tweets["keyword"].value_counts()[:20].to_frame()
+fig=plt.figure(figsize=(15,6))
+sns.barplot(data=common_keywords, x=common_keywords.index, y="keyword", palette="flare")
+plt.title("Most common disaster keywords", size=24)
+plt.xticks(rotation=70,size=12);
+
+common_keywords=nondisaster_tweets["keyword"].value_counts()[:20].to_frame()
+fig=plt.figure(figsize=(15,6))
+sns.barplot(data=common_keywords, x=common_keywords.index, y="keyword", palette="BuGn_r")
+plt.title("Most common non-disaster keywords", size=24)
+plt.xticks(rotation=70,size=12);
+
+common_keywords=train_data["keyword"].value_counts()[:20].to_frame()
+fig=plt.figure(figsize=(15,6))
+sns.barplot(data=common_keywords, x=common_keywords.index, y="keyword", palette="Dark2")
+plt.title("Most common keywords", size=24)
+plt.xticks(rotation=70,size=12);
+
+# We're looking at the most common keywords in both disaster and non disaster tweets 
+# The last graph shows the most common keywords overall
